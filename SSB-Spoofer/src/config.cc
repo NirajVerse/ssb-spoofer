@@ -30,6 +30,10 @@ bool load_from_influxdb(Config& config)
 
     // SSB / PHY parameters
     config.ssb.scs_khz = (band.scs_common == srsran_subcarrier_spacing_15kHz) ? 15 : 30;
+    const bool scs_is_15 =
+      (band.scs_ssb == srsran_subcarrier_spacing_15kHz) ||
+      (band.scs_common == srsran_subcarrier_spacing_15kHz);
+    config.ssb.scs_khz = scs_is_15 ? 15 : 30;
 
     switch (band.ssb_pattern) {
         case SRSRAN_SSB_PATTERN_A: config.ssb.pattern = "A"; break;
