@@ -2,7 +2,7 @@ from worker_thread import WorkerThread
 
 class ssb_spoofer(WorkerThread):
     def start(self):
-        self.config.image_name = "ghcr.io/oran-testing/ssb-spoofer"
+        self.config.image_name = "ghcr.io/nirajverse/ssb-spoofer"
         self.cleanup_old_containers()
         self.setup_env()
         self.setup_networks()
