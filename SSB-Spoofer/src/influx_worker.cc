@@ -34,6 +34,24 @@ static void log_fields_map(const std::unordered_map<std::string, std::string>& f
     LOG_DEBUG("  %s = %s", kv.first.c_str(), kv.second.c_str());
   }
 }
+static srsran_subcarrier_spacing_t parse_scs_field(const std::string& s)
+{
+  if (s.find("15") != std::string::npos) {
+    return srsran_subcarrier_spacing_15kHz;
+  }
+  if (s.find("30") != std::string::npos) {
+    return srsran_subcarrier_spacing_30kHz;
+  }
+  // numeric fallback: "0" = 15kHz, "1" = 30kHz in srsRAN enum
+  try {
+    const int v = std::stoi(s);
+    return (v == 0) ? srsran_subcarrier_spacing_15kHz : srsran_subcarrier_spacing_30kHz;
+  } catch (...) {
+    return srsran_subcarrier_spacing_15kHz;
+  }
+}
+
+
 
 static std::unordered_map<std::string, std::string> parse_flux_fields(const std::string& resp)
 {
@@ -149,12 +167,22 @@ bool InfluxWorker::recv_band_report(recon_band_report_t& report)
 
   auto fields = parse_flux_fields(resp);
 	log_fields_map(fields);
-
+  memset(&report, 0, sizeof(report));
   report.band              = std::stoi(fields["band"]);
   report.nof_prb           = std::stoi(fields["nof_prb"]);
   report.offset_to_carrier = std::stoi(fields["offset_to_carrier"]);
   //report.scs_common        = (srsran_subcarrier_spacing_t)std::stoi(fields["scs_common"]);
   //report.scs_ssb           = (srsran_subcarrier_spacing_t)std::stoi(fields["scs_ssb"]);
+
+  report.scs_common = srsran_subcarrier_spacing_15kHz;
+  report.scs_ssb      = srsran_subcarrier_spacing_15kHz;
+
+  if (fields.count("scs_ssb")) {
+    report.scs_ssb = parse_scs_field(fields["scs_ssb"]);
+  }
+  if (fields.count("scs_common")) {
+    report.scs_common = parse_scs_field(fields["scs_common"]);
+  }
   report.dl_arfcn          = std::stoi(fields["dl_arfcn"]);
   report.ul_arfcn          = std::stoi(fields["ul_arfcn"]);
   report.ssb_arfcn         = std::stoi(fields["ssb_arfcn"]);
